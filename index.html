@@ -1,13 +1,357 @@
 <!DOCTYPE html>
-
-<html>
+<html lang="en">
 <head>
-  <meta http-equiv="CONTENT-TYPE" content="text/html; charset=UTF-8">
-  <title>Hello, World!</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoleSource | Premium Sneakers</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #000000;
+            --accent: #ff4757;
+            --light: #f1f2f6;
+            --white: #ffffff;
+            --success: #2ed573;
+            --shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; }
+        body { background: var(--light); color: var(--primary); }
+
+        /* Navigation */
+        nav { background: var(--white); padding: 1rem 5%; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; box-shadow: var(--shadow); }
+        .logo { font-size: 1.5rem; font-weight: 800; cursor: pointer; letter-spacing: -1px; }
+        .nav-links span { margin-left: 20px; cursor: pointer; font-weight: 600; transition: 0.3s; position: relative; }
+        .nav-links span:hover { color: var(--accent); }
+        #cart-count { background: var(--accent); color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.7rem; position: absolute; top: -10px; right: -10px; }
+
+        /* General Layout */
+        .container { padding: 2rem 5%; display: none; max-width: 1200px; margin: 0 auto; }
+        .active { display: block; }
+        h2 { margin-bottom: 1.5rem; border-left: 5px solid var(--accent); padding-left: 15px; }
+
+        /* Sneakers Grid */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 2rem; }
+        .card { background: var(--white); padding: 1rem; border-radius: 12px; box-shadow: var(--shadow); position: relative; transition: transform 0.3s; }
+        .card:hover { transform: translateY(-5px); }
+        .card img { width: 100%; border-radius: 8px; height: 220px; object-fit: cover; }
+        .card h3 { margin: 12px 0 5px; font-size: 1.2rem; }
+        .price { font-weight: 800; color: var(--accent); font-size: 1.3rem; margin-bottom: 10px; }
+        .size-container { margin: 10px 0; }
+        .size-tag { display: inline-block; background: #eee; padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; margin: 2px; cursor: pointer; }
+        .size-tag:hover { background: var(--primary); color: white; }
+        
+        .card-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        button { border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .btn-cart { background: var(--primary); color: white; }
+        .btn-buy { background: var(--accent); color: white; }
+        .btn-cart:hover, .btn-buy:hover { opacity: 0.8; }
+        
+        .fav-btn { position: absolute; top: 15px; right: 15px; background: white; border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow); color: #ccc; }
+        .fav-active { color: var(--accent) !important; }
+
+        /* Profile & Admin Forms */
+        .form-card { background: white; padding: 25px; border-radius: 15px; box-shadow: var(--shadow); margin-bottom: 2rem; }
+        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; outline: none; }
+        input:focus { border-color: var(--accent); }
+        
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; margin-top: 20px; box-shadow: var(--shadow); }
+        th, td { padding: 18px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f8f9fa; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px; }
+        
+        .badge { padding: 5px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; }
+        .pending { background: #fff3cd; color: #856404; }
+        .delivered { background: #d4edda; color: #155724; }
+        
+        /* Empty States */
+        .empty-msg { text-align: center; padding: 3rem; color: #888; }
+    </style>
 </head>
 <body>
-  <h1>
-    Hello, World!
-  </h1>
+
+<nav>
+    <div class="logo" onclick="showView('shop')">SOLESOURCE</div>
+    <div class="nav-links">
+        <span onclick="showView('shop')"><i class="fas fa-store"></i> Shop</span>
+        <span onclick="showView('cart-view')">
+            <i class="fas fa-shopping-cart"></i> Cart
+            <span id="cart-count">0</span>
+        </span>
+        <span onclick="showView('profile')"><i class="fas fa-user"></i> Profile</span>
+        <span onclick="showView('admin')"><i class="fas fa-user-shield"></i> Admin</span>
+    </div>
+</nav>
+
+<div id="shop" class="container active">
+    <h2>Explore New Drops</h2>
+    <div id="sneaker-grid" class="grid"></div>
+</div>
+
+<div id="cart-view" class="container">
+    <h2>Your Shopping Cart</h2>
+    <div id="cart-items-list"></div>
+    <div id="cart-total-section" class="form-card" style="margin-top:20px; text-align: right; display:none;">
+        <h3 id="total-price-display" style="margin-bottom: 15px;">Total: $0</h3>
+        <button onclick="checkout()" class="btn-buy" style="padding: 15px 40px;">Proceed to Checkout</button>
+    </div>
+</div>
+
+<div id="profile" class="container">
+    <h2>Member Profile</h2>
+    <div class="grid" style="grid-template-columns: 1fr 2fr;">
+        <div class="form-card">
+            <h3>Contact Info</h3>
+            <label>Email Address</label>
+            <input type="email" id="edit-email" placeholder="Email">
+            <label>Contact Number</label>
+            <input type="text" id="edit-phone" placeholder="Phone">
+            <button onclick="updateProfile()" class="btn-cart" style="width:100%; margin-top:10px;">Save Profile</button>
+        </div>
+        <div>
+            <h3>Order History</h3>
+            <table id="profile-order-table">
+                <thead>
+                    <tr><th>Order ID</th><th>Product</th><th>Price</th><th>Status</th></tr>
+                </thead>
+                <tbody id="order-history"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="admin" class="container">
+    <h2>Inventory Control</h2>
+    <div class="form-card">
+        <h3>Add New Sneaker</h3>
+        <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+            <input type="text" id="adm-name" placeholder="Sneaker Model">
+            <input type="number" id="adm-price" placeholder="Retail Price ($)">
+            <input type="text" id="adm-img" placeholder="Image Link">
+            <input type="text" id="adm-sizes" placeholder="Sizes (e.g. 8, 9, 10)">
+            <button onclick="addStock()" class="btn-buy">List Item</button>
+        </div>
+    </div>
+
+    <h3>Active Inventory</h3>
+    <table id="admin-table">
+        <thead>
+            <tr><th>Preview</th><th>Name</th><th>Price</th><th>Sizes</th><th>Action</th></tr>
+        </thead>
+        <tbody id="admin-inventory"></tbody>
+    </table>
+</div>
+
+<script>
+    // Database Management
+    let sneakers = JSON.parse(localStorage.getItem('sneakers')) || [
+        { id: 1, name: "Air Max Infinity", price: 120, sizes: "7,8,9,10", img: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400" },
+        { id: 2, name: "Desert Walker", price: 85, sizes: "8,9,11", img: "https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?w=400" },
+        { id: 3, name: "Neon Runner", price: 150, sizes: "9,10,12", img: "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=400" }
+    ];
+
+    let userProfile = JSON.parse(localStorage.getItem('userProfile')) || {
+        email: "kristine.joy@example.com",
+        phone: "+63 912 345 6789"
+    };
+
+    let cart = JSON.parse(localStorage.getItem('cart')) || [];
+    let orders = JSON.parse(localStorage.getItem('orders')) || [];
+
+    // Navigation
+    function showView(viewId) {
+        document.querySelectorAll('.container').forEach(c => c.classList.remove('active'));
+        document.getElementById(viewId).classList.add('active');
+        renderAll();
+    }
+
+    // Render Engines
+    function renderAll() {
+        renderShop();
+        renderCart();
+        renderProfile();
+        renderAdmin();
+        updateBadge();
+    }
+
+    function updateBadge() {
+        document.getElementById('cart-count').innerText = cart.length;
+    }
+
+    function renderShop() {
+        const grid = document.getElementById('sneaker-grid');
+        grid.innerHTML = '';
+        sneakers.forEach(item => {
+            const sizeList = item.sizes.split(',').map(s => `<span class="size-tag">${s}</span>`).join('');
+            grid.innerHTML += `
+                <div class="card">
+                    <div class="fav-btn" onclick="toggleFav(this)"><i class="fas fa-heart"></i></div>
+                    <img src="${item.img}" alt="${item.name}">
+                    <h3>${item.name}</h3>
+                    <div class="price">$${item.price}</div>
+                    <div class="size-container">${sizeList}</div>
+                    <div class="card-buttons">
+                        <button class="btn-cart" onclick="addToCart(${item.id})">Add Cart</button>
+                        <button class="btn-buy" onclick="quickBuy(${item.id})">Buy Now</button>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    function renderCart() {
+        const list = document.getElementById('cart-items-list');
+        const totalSection = document.getElementById('cart-total-section');
+        list.innerHTML = '';
+        
+        if(cart.length === 0) {
+            list.innerHTML = '<div class="empty-msg">Your cart is empty. Start shopping!</div>';
+            totalSection.style.display = 'none';
+            return;
+        }
+
+        totalSection.style.display = 'block';
+        let total = 0;
+        cart.forEach((item, index) => {
+            total += item.price;
+            list.innerHTML += `
+                <div class="form-card" style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+                    <div style="display:flex; align-items:center; gap:20px;">
+                        <img src="${item.img}" width="60" style="border-radius:8px">
+                        <div>
+                            <h4 style="margin:0">${item.name}</h4>
+                            <small>Price: $${item.price}</small>
+                        </div>
+                    </div>
+                    <button onclick="removeFromCart(${index})" style="background:#ffeded; color:red; padding:5px 15px;">Remove</button>
+                </div>
+            `;
+        });
+        document.getElementById('total-price-display').innerText = `Total: $${total}`;
+    }
+
+    function renderProfile() {
+        document.getElementById('edit-email').value = userProfile.email;
+        document.getElementById('edit-phone').value = userProfile.phone;
+        
+        const history = document.getElementById('order-history');
+        history.innerHTML = orders.length === 0 ? '<tr><td colspan="4" style="text-align:center">No orders found</td></tr>' : '';
+        
+        orders.forEach(order => {
+            history.innerHTML += `
+                <tr>
+                    <td>#${order.id}</td>
+                    <td>${order.name}</td>
+                    <td>$${order.price}</td>
+                    <td><span class="badge ${order.status.toLowerCase()}">${order.status}</span></td>
+                </tr>
+            `;
+        });
+    }
+
+    function renderAdmin() {
+        const inv = document.getElementById('admin-inventory');
+        inv.innerHTML = '';
+        sneakers.forEach((item, index) => {
+            inv.innerHTML += `
+                <tr>
+                    <td><img src="${item.img}" width="40" style="border-radius:4px"></td>
+                    <td>${item.name}</td>
+                    <td>$${item.price}</td>
+                    <td>${item.sizes}</td>
+                    <td><button onclick="removeItem(${index})" style="background:#ffeded; color:red; padding:5px 10px;">Delete</button></td>
+                </tr>
+            `;
+        });
+    }
+
+    // Logic Functions
+    function toggleFav(btn) {
+        btn.classList.toggle('fav-active');
+    }
+
+    function addToCart(id) {
+        const item = sneakers.find(s => s.id === id);
+        cart.push({...item});
+        saveData();
+        renderAll();
+    }
+
+    function removeFromCart(index) {
+        cart.splice(index, 1);
+        saveData();
+        renderAll();
+    }
+
+    function quickBuy(id) {
+        const item = sneakers.find(s => s.id === id);
+        processOrder(item.name, item.price);
+        showView('profile');
+    }
+
+    function checkout() {
+        cart.forEach(item => processOrder(item.name, item.price));
+        cart = [];
+        saveData();
+        alert("Checkout successful! Thank you for your purchase.");
+        showView('profile');
+    }
+
+    function processOrder(name, price) {
+        orders.unshift({
+            id: Math.floor(1000 + Math.random() * 9000),
+            name: name,
+            price: price,
+            status: "Pending"
+        });
+        saveData();
+    }
+
+    function updateProfile() {
+        userProfile.email = document.getElementById('edit-email').value;
+        userProfile.phone = document.getElementById('edit-phone').value;
+        saveData();
+        alert("Profile updated successfully!");
+    }
+
+    function addStock() {
+        const name = document.getElementById('adm-name').value;
+        const price = parseFloat(document.getElementById('adm-price').value);
+        const img = document.getElementById('adm-img').value || "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400";
+        const sizes = document.getElementById('adm-sizes').value;
+
+        if(name && price && sizes) {
+            sneakers.push({ id: Date.now(), name, price, sizes, img });
+            saveData();
+            renderAll();
+            alert("New sneaker listed!");
+            // Clear inputs
+            document.getElementById('adm-name').value = '';
+            document.getElementById('adm-price').value = '';
+            document.getElementById('adm-img').value = '';
+            document.getElementById('adm-sizes').value = '';
+        } else {
+            alert("Please fill in all fields.");
+        }
+    }
+
+    function removeItem(index) {
+        if(confirm("Are you sure you want to remove this item?")) {
+            sneakers.splice(index, 1);
+            saveData();
+            renderAll();
+        }
+    }
+
+    function saveData() {
+        localStorage.setItem('sneakers', JSON.stringify(sneakers));
+        localStorage.setItem('userProfile', JSON.stringify(userProfile));
+        localStorage.setItem('cart', JSON.stringify(cart));
+        localStorage.setItem('orders', JSON.stringify(orders));
+    }
+
+    // Start App
+    renderAll();
+</script>
+
 </body>
 </html>
